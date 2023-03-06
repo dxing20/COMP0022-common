@@ -1,2 +1,2 @@
-import { NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 export declare const checkValidationResult: (req: Request, res: Response, next: NextFunction) => void;
