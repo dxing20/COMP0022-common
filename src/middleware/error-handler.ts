@@ -1,5 +1,5 @@
-import { Request, Response, NextFunction } from 'express';
-import { DefinedError } from '../errors/defined-error';
+import { Request, Response, NextFunction } from "express";
+import { DefinedError } from "../errors/defined-error";
 
 export const errorHandler = (
   err: Error,
@@ -13,6 +13,6 @@ export const errorHandler = (
 
   // unexpected error happened
   res.status(400).send({
-    errors: [{ message: 'An unexpected error happened' }]
+    errors: [{ message: "An unexpected error happened", field: err.message }],
   });
 };
