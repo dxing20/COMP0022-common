@@ -11,6 +11,6 @@ export class PageNotFoundError extends DefinedError {
   }
 
   response() {
-    return [{ message: 'Cannot find page at requested route', field: this.expectedRoute}];
+    return [{ message: 'Page not found', field: this.expectedRoute}];
   }
 }
