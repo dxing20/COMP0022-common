@@ -5,7 +5,7 @@ const defined_error_1 = require("./defined-error");
 class AuthenticationError extends defined_error_1.DefinedError {
     constructor(reason) {
         super("Authentication failed");
-        this.statusCode = 404;
+        this.statusCode = 403;
         Object.setPrototypeOf(this, AuthenticationError.prototype);
         this.reason = reason;
     }
