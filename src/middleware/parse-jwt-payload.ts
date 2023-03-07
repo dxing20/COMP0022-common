@@ -3,6 +3,14 @@ import jwt from "jsonwebtoken";
 import { AuthenticationError } from "../errors/authentication-error";
 import { CustomJwtPayload } from "../interface/jwt-payload";
 
+declare global {
+  namespace Express {
+    interface Request {
+      jwtPayload?: CustomJwtPayload;
+    }
+  }
+}
+
 export const parseJwtPayload = (
   req: Request,
   res: Response,
