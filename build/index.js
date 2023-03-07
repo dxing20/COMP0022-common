@@ -15,5 +15,6 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./errors/path-not-found-error"), exports);
+__exportStar(require("./errors/authentication-error"), exports);
 __exportStar(require("./middleware/error-handler"), exports);
 __exportStar(require("./middleware/check-validation-result"), exports);

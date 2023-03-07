@@ -8,7 +8,7 @@ const errorHandler = (err, req, res, next) => {
     }
     // unexpected error happened
     res.status(400).send({
-        errors: [{ message: 'An unexpected error happened' }]
+        errors: [{ message: "An unexpected error happened", field: err.message }],
     });
 };
 exports.errorHandler = errorHandler;
