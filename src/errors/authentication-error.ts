@@ -1,7 +1,7 @@
 import { DefinedError } from "./defined-error";
 
 export class AuthenticationError extends DefinedError {
-  statusCode = 404;
+  statusCode = 403;
   reason: string;
 
   constructor(reason: string) {

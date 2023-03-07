@@ -2,7 +2,7 @@ import { ValidationError } from "express-validator";
 import { DefinedError } from "./defined-error";
 
 export class RequestValidationError extends DefinedError {
-  statusCode = 404;
+  statusCode = 400;
   validationErrors: { message: string; field: string }[];
 
   constructor(validationErrors: { message: string; field: string }[]) {
