@@ -5,6 +5,5 @@ export declare class AuthenticationError extends DefinedError {
     constructor(reason: string);
     response(): {
         message: string;
-        field: string;
     }[];
 }

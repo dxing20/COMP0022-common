@@ -10,7 +10,7 @@ class AuthenticationError extends defined_error_1.DefinedError {
         this.reason = reason;
     }
     response() {
-        return [{ message: "Authentication error", field: this.reason }];
+        return [{ message: this.reason }];
     }
 }
 exports.AuthenticationError = AuthenticationError;

@@ -11,6 +11,6 @@ export class AuthenticationError extends DefinedError {
   }
 
   response() {
-    return [{ message: "Authentication error", field: this.reason }];
+    return [{ message: this.reason }];
   }
 }
