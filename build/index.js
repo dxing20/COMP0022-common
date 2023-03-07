@@ -18,3 +18,4 @@ __exportStar(require("./errors/path-not-found-error"), exports);
 __exportStar(require("./errors/authentication-error"), exports);
 __exportStar(require("./middleware/error-handler"), exports);
 __exportStar(require("./middleware/check-validation-result"), exports);
+__exportStar(require("./middleware/parse-jwt-payload"), exports);
