@@ -61,14 +61,14 @@ class Graph {
         }
         // add root node
         this.root = new RootNode(this.i++, parentlessNodes[0]);
-        this.root.depth = parentlessNodes[0].depth - 1;
+        this.root.depth = parentlessNodes[0].depth + 1;
         this.nodes.push(this.root);
         parentlessNodes[0].hasParent = true;
     }
     getGraph() {
         let nodes = [];
         let edges = [];
-        let freq = new Array(this.nodes.length).fill(0);
+        let freq = new Array(30).fill(0);
         for (let node of this.nodes) {
             nodes.push(node.generateNode(freq));
             let edge = node.generateEdge();
