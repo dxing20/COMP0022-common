@@ -188,7 +188,7 @@ class DataNode {
     }
     generateNode(freq) {
         return {
-            id: this.id,
+            id: `${this.id}`,
             type: "input",
             data: { label: this.tableName },
             position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
@@ -233,7 +233,7 @@ class RootNode {
     }
     generateNode(freq) {
         return {
-            id: "0",
+            id: `${this.id}`,
             type: "output",
             data: { label: "Root" },
             position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },

@@ -216,7 +216,7 @@ export class DataNode implements GraphNode {
 
   generateNode(freq: number[]): any {
     return {
-      id: this.id,
+      id: `${this.id}`,
       type: "input",
       data: { label: this.tableName },
       position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
@@ -271,7 +271,7 @@ export class RootNode implements GraphNode {
 
   generateNode(freq: number[]): any {
     return {
-      id: "0",
+      id: `${this.id}`,
       type: "output",
       data: { label: "Root" },
       position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
