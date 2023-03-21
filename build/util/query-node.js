@@ -232,11 +232,13 @@ class RootNode {
         });
     }
     generateNode(freq) {
+        const f = freq[this.depth] * 50;
+        freq[this.depth] = freq[this.depth] + 1;
         return {
             id: `${this.id}`,
             type: "output",
             data: { label: "Root" },
-            position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
+            position: { x: 200 * this.depth, y: f },
             connectable: false,
             targetPosition: "left",
         };
