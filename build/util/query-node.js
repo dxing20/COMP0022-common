@@ -387,6 +387,7 @@ class JoinNode {
             position: { x: 200 * this.depth, y: f },
             connectable: false,
             targetPosition: "left",
+            sourcePosition: "right",
         };
     }
     generateEdge(otherNodes) {
