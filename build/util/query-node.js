@@ -292,14 +292,10 @@ class RootNode {
         };
     }
     generateEdge(otherNodes) {
-        let child = otherNodes.find((node) => node.id === this.child);
-        if (!child) {
-            throw new Error("Child node not found");
-        }
         return [
             {
-                id: `e${child.id}-${this.id}`,
-                source: `${child.id}`,
+                id: `e${this.child}-${this.id}`,
+                source: `${this.child}`,
                 target: `${this.id}`,
             },
         ];
