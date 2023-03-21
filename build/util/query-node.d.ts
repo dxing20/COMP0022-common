@@ -17,6 +17,7 @@ export declare class Graph {
         nodes: any[];
         edges: any[];
     };
+    clone(): Graph;
 }
 export declare enum ClientStatus {
     CHILD_UNRESOLVED = 0,
