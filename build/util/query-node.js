@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.Graph = exports.RuntimeQueryHandler = void 0;
+exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = void 0;
 const sql_query_1 = require("./sql-query");
 class RuntimeQueryHandler {
     constructor(queryTableNames, queryColumns) {
@@ -78,42 +78,43 @@ class Graph {
         }
         return { nodes, edges };
     }
-    clone() {
-        const newGraph = new Graph(this.queryHandler);
-        newGraph.i = this.i;
-        newGraph.nodes = this.nodes.map((node) => {
-            if (node instanceof DataNode) {
-                const newNode = new DataNode(node.id, node.tableName);
-                newNode.status = node.status;
-                newNode.depth = node.depth;
-                newNode.error = node.error;
-                newNode.hasParent = node.hasParent;
-                newNode.columns = [...node.columns];
-                return newNode;
-            }
-            else if (node instanceof RootNode) {
-                const newNode = new RootNode(node.id, node.child);
-                newNode.status = node.status;
-                newNode.depth = node.depth;
-                newNode.error = node.error;
-                newNode.hasParent = node.hasParent;
-                newNode.columns = [...node.columns];
-                return newNode;
-            }
-            else {
-                throw new Error("Unknown node type");
-            }
-        });
-        if (this.root) {
-            const rootIndex = newGraph.nodes.findIndex((node) => node.id === this.root.id);
-            if (rootIndex !== -1) {
-                newGraph.root = newGraph.nodes[rootIndex];
-            }
-        }
-        return newGraph;
-    }
 }
 exports.Graph = Graph;
+const cloneGraph = (graph) => {
+    const newGraph = new Graph(graph.queryHandler);
+    newGraph.i = graph.i;
+    newGraph.nodes = graph.nodes.map((node) => {
+        if (node instanceof DataNode) {
+            const newNode = new DataNode(node.id, node.tableName);
+            newNode.status = node.status;
+            newNode.depth = node.depth;
+            newNode.error = node.error;
+            newNode.hasParent = node.hasParent;
+            newNode.columns = [...node.columns];
+            return newNode;
+        }
+        else if (node instanceof RootNode) {
+            const newNode = new RootNode(node.id, node.child);
+            newNode.status = node.status;
+            newNode.depth = node.depth;
+            newNode.error = node.error;
+            newNode.hasParent = node.hasParent;
+            newNode.columns = [...node.columns];
+            return newNode;
+        }
+        else {
+            throw new Error("Unknown node type");
+        }
+    });
+    if (graph.root) {
+        const rootIndex = newGraph.nodes.findIndex((node) => node.id === graph.root.id);
+        if (rootIndex !== -1) {
+            newGraph.root = newGraph.nodes[rootIndex];
+        }
+    }
+    return newGraph;
+};
+exports.cloneGraph = cloneGraph;
 var ClientStatus;
 (function (ClientStatus) {
     ClientStatus[ClientStatus["CHILD_UNRESOLVED"] = 0] = "CHILD_UNRESOLVED";

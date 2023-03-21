@@ -85,44 +85,44 @@ export class Graph {
 
     return { nodes, edges };
   }
-
-  clone(): Graph {
-    const newGraph: Graph = new Graph(this.queryHandler);
-    newGraph.i = this.i;
-    newGraph.nodes = this.nodes.map((node) => {
-      if (node instanceof DataNode) {
-        const newNode = new DataNode(node.id, node.tableName);
-        newNode.status = node.status;
-        newNode.depth = node.depth;
-        newNode.error = node.error;
-        newNode.hasParent = node.hasParent;
-        newNode.columns = [...node.columns];
-        return newNode;
-      } else if (node instanceof RootNode) {
-        const newNode = new RootNode(node.id, node.child);
-        newNode.status = node.status;
-        newNode.depth = node.depth;
-        newNode.error = node.error;
-        newNode.hasParent = node.hasParent;
-        newNode.columns = [...node.columns];
-        return newNode;
-      } else {
-        throw new Error("Unknown node type");
-      }
-    });
-
-    if (this.root) {
-      const rootIndex = newGraph.nodes.findIndex(
-        (node) => node.id === this.root!.id
-      );
-      if (rootIndex !== -1) {
-        newGraph.root = newGraph.nodes[rootIndex] as RootNode;
-      }
-    }
-
-    return newGraph;
-  }
 }
+
+export const cloneGraph = (graph: Graph): Graph => {
+  const newGraph: Graph = new Graph(graph.queryHandler);
+  newGraph.i = graph.i;
+  newGraph.nodes = graph.nodes.map((node) => {
+    if (node instanceof DataNode) {
+      const newNode = new DataNode(node.id, node.tableName);
+      newNode.status = node.status;
+      newNode.depth = node.depth;
+      newNode.error = node.error;
+      newNode.hasParent = node.hasParent;
+      newNode.columns = [...node.columns];
+      return newNode;
+    } else if (node instanceof RootNode) {
+      const newNode = new RootNode(node.id, node.child);
+      newNode.status = node.status;
+      newNode.depth = node.depth;
+      newNode.error = node.error;
+      newNode.hasParent = node.hasParent;
+      newNode.columns = [...node.columns];
+      return newNode;
+    } else {
+      throw new Error("Unknown node type");
+    }
+  });
+
+  if (graph.root) {
+    const rootIndex = newGraph.nodes.findIndex(
+      (node) => node.id === graph.root!.id
+    );
+    if (rootIndex !== -1) {
+      newGraph.root = newGraph.nodes[rootIndex] as RootNode;
+    }
+  }
+
+  return newGraph;
+};
 
 export enum ClientStatus {
   CHILD_UNRESOLVED,
