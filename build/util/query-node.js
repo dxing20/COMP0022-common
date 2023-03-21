@@ -94,7 +94,7 @@ class Graph {
         }
         // add root node
         this.root = this.i++;
-        let root = new RootNode(this.i++, parentlessNodes[0].id);
+        let root = new RootNode(this.i, parentlessNodes[0].id);
         root.depth = parentlessNodes[0].depth + 1;
         this.nodes.push(root);
         parentlessNodes[0].hasParent = true;
