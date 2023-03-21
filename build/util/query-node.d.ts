@@ -18,10 +18,11 @@ export declare class RuntimeQueryHandler {
 export declare class Graph {
     i: number;
     nodes: GraphNode[];
-    root: RootNode | undefined;
+    root: number | undefined;
     queryHandler: RuntimeQueryHandler;
     constructor(queryHandler: RuntimeQueryHandler);
     clientRefresh(): Promise<void>;
+    resolveRootQuery(): Promise<SQLQuery | undefined>;
     addDataNode(tableName: string): void;
     addRootNode(): void;
     getGraph(): {
@@ -44,12 +45,11 @@ export declare class GraphNode {
     depth: number;
     columns: string[];
     constructor(id: number);
-    getChildren(): GraphNode[];
-    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler): Promise<{
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;
     generateNode(freq: number[]): any;
-    generateEdge(): any;
+    generateEdge(otherNodes: GraphNode[]): any;
 }
 export declare class DataNode implements GraphNode {
     tableName: string;
@@ -61,12 +61,11 @@ export declare class DataNode implements GraphNode {
     hasParent: boolean;
     columns: string[];
     constructor(id: number, tableName: string);
-    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler): Promise<{
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;
-    getChildren(): GraphNode[];
     generateNode(freq: number[]): any;
-    generateEdge(): any;
+    generateEdge(otherNodes: GraphNode[]): any;
 }
 export declare class RootNode implements GraphNode {
     id: number;
@@ -74,14 +73,13 @@ export declare class RootNode implements GraphNode {
     status: ClientStatus;
     error: string | undefined;
     depth: number;
-    child: GraphNode;
+    child: number;
     hasParent: boolean;
     columns: string[];
-    constructor(id: number, child: GraphNode);
-    getChildren(): GraphNode[];
-    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler): Promise<{
+    constructor(id: number, child: number);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;
     generateNode(freq: number[]): any;
-    generateEdge(): any;
+    generateEdge(otherNodes: GraphNode[]): any;
 }
