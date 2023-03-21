@@ -25,6 +25,7 @@ export declare class Graph {
     resolveRootQuery(): Promise<SQLQuery | undefined>;
     addDataNode(tableName: string): void;
     addRootNode(): void;
+    addJoinNode(child1: number, child2: number, joinType: JoinType, on1: string, on2: string): void;
     getGraph(): {
         nodes: any[];
         edges: any[];
@@ -49,7 +50,7 @@ export declare class GraphNode {
         sqlQuery: SQLQuery | undefined;
     }>;
     generateNode(freq: number[]): any;
-    generateEdge(otherNodes: GraphNode[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
 }
 export declare class DataNode implements GraphNode {
     tableName: string;
@@ -65,7 +66,7 @@ export declare class DataNode implements GraphNode {
         sqlQuery: SQLQuery | undefined;
     }>;
     generateNode(freq: number[]): any;
-    generateEdge(otherNodes: GraphNode[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
 }
 export declare class RootNode implements GraphNode {
     id: number;
@@ -81,5 +82,31 @@ export declare class RootNode implements GraphNode {
         sqlQuery: SQLQuery | undefined;
     }>;
     generateNode(freq: number[]): any;
-    generateEdge(otherNodes: GraphNode[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
+}
+export declare enum JoinType {
+    INNER = "INNER JOIN",
+    LEFT = "LEFT JOIN",
+    RIGHT = "RIGHT JOIN",
+    FULL = "FULL JOIN"
+}
+export declare class JoinNode implements GraphNode {
+    id: number;
+    type: NodeType;
+    status: ClientStatus;
+    error: string | undefined;
+    depth: number;
+    child1: number;
+    child2: number;
+    hasParent: boolean;
+    columns: string[];
+    joinType: JoinType;
+    on1: string;
+    on2: string;
+    constructor(id: number, child1: number, child2: number, joinType: JoinType, on1: string, on2: string);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
+        sqlQuery: SQLQuery | undefined;
+    }>;
+    generateNode(freq: number[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
 }

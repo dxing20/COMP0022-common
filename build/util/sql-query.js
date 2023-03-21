@@ -59,6 +59,7 @@ class SQLQuery {
         this.resolveWith(query, params, verifiedTableNames);
         this.resolveSelect(query, params);
         this.resolveFrom(query, params, verifiedTableNames);
+        query.push(";");
         return { text: query.join(" "), params: [] };
     }
     resolveFrom(query, params, verifiedTableNames) {
@@ -88,12 +89,17 @@ class SQLQuery {
         }
     }
     resolveWith(query, parentParams, verifiedTableNames) {
+        if (this.with.length === 0)
+            return;
+        query.push(`WITH`);
         for (let i = 0; i < this.with.length; i++) {
             const withClause = this.with[i];
             const { text, params } = withClause.subQuery.resolve({
                 verifiedTableNames,
             });
-            query.push(`WITH temp${++this.withIdCount} AS (${text})`);
+            query.push(`temp${++this.withIdCount} AS (${text})`);
+            if (i < this.with.length - 1)
+                query.push(", ");
             parentParams.push(...params);
         }
     }

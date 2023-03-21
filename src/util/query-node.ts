@@ -108,6 +108,30 @@ export class Graph {
     parentlessNodes[0].hasParent = true;
   }
 
+  addJoinNode(
+    child1: number,
+    child2: number,
+    joinType: JoinType,
+    on1: string,
+    on2: string
+  ) {
+    let newJoinNode = new JoinNode(
+      this.i++,
+      child1,
+      child2,
+      joinType,
+      on1,
+      on2
+    );
+    newJoinNode.depth =
+      this.nodes[child1].depth > this.nodes[child2].depth
+        ? this.nodes[child1].depth + 1
+        : this.nodes[child2].depth + 1;
+    this.nodes.push(newJoinNode);
+    this.nodes[child1].hasParent = true;
+    this.nodes[child2].hasParent = true;
+  }
+
   getGraph(): { nodes: any[]; edges: any[] } {
     let nodes = [];
     let edges = [];
@@ -117,7 +141,7 @@ export class Graph {
       nodes.push(node.generateNode(freq));
       let edge = node.generateEdge(this.nodes);
       if (edge) {
-        edges.push(edge);
+        edges.push(...edge);
       }
     }
 
@@ -144,7 +168,21 @@ export const cloneGraph = (graph: Graph): Graph => {
       newNode.error = node.error;
       newNode.hasParent = node.hasParent;
       newNode.columns = [...node.columns];
-      newNode.child = node.child;
+      return newNode;
+    } else if (node instanceof JoinNode) {
+      const newNode = new JoinNode(
+        node.id,
+        node.child1,
+        node.child2,
+        node.joinType,
+        node.on1,
+        node.on2
+      );
+      newNode.status = node.status;
+      newNode.depth = node.depth;
+      newNode.error = node.error;
+      newNode.hasParent = node.hasParent;
+      newNode.columns = [...node.columns];
       return newNode;
     } else {
       throw new Error("Unknown node type");
@@ -188,7 +226,7 @@ export class GraphNode {
     throw new Error("Not implemented");
   }
 
-  generateEdge(otherNodes: GraphNode[]): any {
+  generateEdge(otherNodes: GraphNode[]): any[] {
     throw new Error("Not implemented");
   }
 }
@@ -253,8 +291,8 @@ export class DataNode implements GraphNode {
     };
   }
 
-  generateEdge(otherNodes: GraphNode[]): any {
-    return undefined;
+  generateEdge(otherNodes: GraphNode[]): any[] {
+    return [];
   }
 }
 
@@ -314,15 +352,159 @@ export class RootNode implements GraphNode {
     };
   }
 
-  generateEdge(otherNodes: GraphNode[]): any {
+  generateEdge(otherNodes: GraphNode[]): any[] {
     let child = otherNodes.find((node) => node.id === this.child);
     if (!child) {
       throw new Error("Child node not found");
     }
+    return [
+      {
+        id: `e${child.id}-${this.id}`,
+        source: `${child.id}`,
+        target: `${this.id}`,
+      },
+    ];
+  }
+}
+
+export enum JoinType {
+  INNER = "INNER JOIN",
+  LEFT = "LEFT JOIN",
+  RIGHT = "RIGHT JOIN",
+  FULL = "FULL JOIN",
+}
+
+export class JoinNode implements GraphNode {
+  id: number;
+  type = NodeType.JOIN;
+  status: ClientStatus;
+  error: string | undefined;
+  depth: number = 0;
+  child1: number;
+  child2: number;
+  hasParent: boolean = false;
+  columns: string[] = [];
+  joinType: JoinType;
+  on1: string;
+  on2: string;
+
+  constructor(
+    id: number,
+    child1: number,
+    child2: number,
+    joinType: JoinType,
+    on1: string,
+    on2: string
+  ) {
+    this.id = id;
+    this.status = ClientStatus.CHILD_UNRESOLVED;
+    this.child1 = child1;
+    this.child2 = child2;
+    this.joinType = joinType;
+    this.on1 = on1;
+    this.on2 = on2;
+  }
+
+  async resolve(
+    tableNames: string[],
+    queryHandler: RuntimeQueryHandler,
+    otherNodes: GraphNode[]
+  ): Promise<{ sqlQuery: SQLQuery | undefined }> {
+    let childQuery1;
+    let child1 = otherNodes.find((node) => node.id === this.child1);
+    let childQuery2;
+    let child2 = otherNodes.find((node) => node.id === this.child2);
+    if (!child1 || !child2) {
+      this.status = ClientStatus.ERROR;
+      this.error = "Child node not found";
+      return { sqlQuery: undefined };
+    }
+
+    if (child1.status == ClientStatus.CHILD_UNRESOLVED) {
+      childQuery1 = await child1.resolve(tableNames, queryHandler, otherNodes);
+    }
+    if (child2.status == ClientStatus.CHILD_UNRESOLVED) {
+      childQuery2 = await child2.resolve(tableNames, queryHandler, otherNodes);
+    }
+
+    if (
+      child1.status == ClientStatus.ERROR ||
+      child2.status == ClientStatus.ERROR ||
+      !childQuery1 ||
+      !childQuery2
+    ) {
+      this.status = ClientStatus.ERROR;
+      this.error = "Child node has error";
+      return { sqlQuery: undefined };
+    }
+
+    const sqlQuery: SQLQuery = new SQLQuery({
+      join: this.joinType,
+      on1: this.on1,
+      on2: this.on2,
+      isIndex1: true,
+      isIndex2: true,
+      tableName1: "temp0",
+      tableName2: "temp1",
+    });
+
+    sqlQuery.withIdCount += 2;
+
+    if (this.on1 != this.on2) {
+      this.status = ClientStatus.ERROR;
+      this.error = "Join on different columns not supported yet";
+      return { sqlQuery: undefined };
+    }
+
+    // get overlap of columns
+    const overlap = child1.columns.filter((value) =>
+      child2!.columns.includes(value)
+    );
+    if (overlap.length > 1) {
+      this.status = ClientStatus.ERROR;
+      this.error = "Too many common column names found";
+      return { sqlQuery: undefined };
+    }
+
+    sqlQuery.with = [childQuery1!, childQuery2!];
+
+    this.columns = child1.columns.concat(child2.columns);
+    this.columns = this.columns.filter((value) => !overlap.includes(value));
+    this.columns = this.columns.concat(overlap);
+
+    return { sqlQuery: sqlQuery };
+  }
+
+  generateNode(freq: number[]): any {
+    const f: number = freq[this.depth] * 50;
+    freq[this.depth] = freq[this.depth] + 1;
     return {
-      id: `e${child.id}-${this.id}`,
-      source: `${child.id}`,
-      target: `${this.id}`,
+      id: `${this.id}`,
+      type: "output",
+      data: { label: `JOIN` },
+      position: { x: 200 * this.depth, y: f },
+      connectable: false,
+      targetPosition: "left",
     };
+  }
+
+  generateEdge(otherNodes: GraphNode[]): any[] {
+    let child1 = otherNodes.find((node) => node.id === this.child1);
+    let child2 = otherNodes.find((node) => node.id === this.child2);
+    if (!child1 || !child2) {
+      throw new Error("Child node not found");
+    }
+    return [
+      {
+        id: `e${child1.id}-${this.id}`,
+        source: `${child1.id}`,
+        target: `${this.id}`,
+      },
+      {
+        id: `e${child2.id}-${this.id}`,
+        source: `${child2.id}`,
+        target: `${this.id}`,
+      },
+    ];
   }
 }
