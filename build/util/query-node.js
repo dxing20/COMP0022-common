@@ -246,8 +246,8 @@ class RootNode {
     generateEdge() {
         return {
             id: `e${this.child.id}-${this.id}`,
-            source: this.child.id,
-            target: this.id,
+            source: `${this.child.id}`,
+            target: `${this.id}`,
         };
     }
 }
