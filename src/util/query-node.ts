@@ -1,5 +1,17 @@
 import { SQLQuery } from "./sql-query";
 
+export enum NodeType {
+  ROOT,
+  DATA,
+  OTHER,
+  JOIN,
+  FILTER,
+  AGGREGATE,
+  SORT,
+  LIMIT,
+  SELECT,
+}
+
 export class RuntimeQueryHandler {
   queryTableNames: () => Promise<string[]>;
   queryColumns: (tableName: string) => Promise<string[]>;
@@ -132,6 +144,7 @@ export enum ClientStatus {
 
 export class GraphNode {
   id: number;
+  type: NodeType = NodeType.OTHER;
   status: ClientStatus;
   error: string | undefined;
   hasParent: boolean = false;
@@ -165,6 +178,7 @@ export class GraphNode {
 
 export class DataNode implements GraphNode {
   tableName: string;
+  type = NodeType.DATA;
   id: number;
   status: ClientStatus;
   depth = 0;
@@ -232,6 +246,7 @@ export class DataNode implements GraphNode {
 
 export class RootNode implements GraphNode {
   id: number;
+  type = NodeType.ROOT;
   status: ClientStatus;
   error: string | undefined;
   depth: number = 0;

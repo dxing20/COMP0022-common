@@ -9,8 +9,20 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = void 0;
+exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = exports.NodeType = void 0;
 const sql_query_1 = require("./sql-query");
+var NodeType;
+(function (NodeType) {
+    NodeType[NodeType["ROOT"] = 0] = "ROOT";
+    NodeType[NodeType["DATA"] = 1] = "DATA";
+    NodeType[NodeType["OTHER"] = 2] = "OTHER";
+    NodeType[NodeType["JOIN"] = 3] = "JOIN";
+    NodeType[NodeType["FILTER"] = 4] = "FILTER";
+    NodeType[NodeType["AGGREGATE"] = 5] = "AGGREGATE";
+    NodeType[NodeType["SORT"] = 6] = "SORT";
+    NodeType[NodeType["LIMIT"] = 7] = "LIMIT";
+    NodeType[NodeType["SELECT"] = 8] = "SELECT";
+})(NodeType = exports.NodeType || (exports.NodeType = {}));
 class RuntimeQueryHandler {
     constructor(queryTableNames, queryColumns) {
         this.queryTableNames = queryTableNames;
@@ -123,6 +135,7 @@ var ClientStatus;
 })(ClientStatus = exports.ClientStatus || (exports.ClientStatus = {}));
 class GraphNode {
     constructor(id) {
+        this.type = NodeType.OTHER;
         this.hasParent = false;
         this.depth = 0;
         this.columns = [];
@@ -147,6 +160,7 @@ class GraphNode {
 exports.GraphNode = GraphNode;
 class DataNode {
     constructor(id, tableName) {
+        this.type = NodeType.DATA;
         this.depth = 0;
         this.hasParent = false;
         this.columns = [];
@@ -203,6 +217,7 @@ class DataNode {
 exports.DataNode = DataNode;
 class RootNode {
     constructor(id, child) {
+        this.type = NodeType.ROOT;
         this.depth = 0;
         this.hasParent = false;
         this.columns = [];
