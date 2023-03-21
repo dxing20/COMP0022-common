@@ -1,6 +1,6 @@
 import { SQLQuery } from "./sql-query";
 
-class RuntimeQueryHandler {
+export class RuntimeQueryHandler {
   queryTableNames: () => Promise<string[]>;
   queryColumns: (tableName: string) => Promise<string[]>;
 
@@ -13,7 +13,7 @@ class RuntimeQueryHandler {
   }
 }
 
-class Graph {
+export class Graph {
   i: number;
   nodes: GraphNode[];
   root: RootNode | undefined;
@@ -42,12 +42,13 @@ class Graph {
     // start with parentless nodes and resolve them
     let parentlessNodes = this.nodes.filter((node) => !node.hasParent);
     for (let node of parentlessNodes) {
-      await node.clientResolve(tablenames, this.queryHandler);
+      await node.resolve(tablenames, this.queryHandler);
     }
   }
 
   addDataNode(tableName: string) {
     this.nodes.push(new DataNode(this.i++, tableName));
+    this.nodes[this.nodes.length - 1].depth = 0;
   }
 
   addRootNode() {
@@ -64,22 +65,40 @@ class Graph {
 
     // add root node
     this.root = new RootNode(this.i++, parentlessNodes[0]);
+    this.root.depth = parentlessNodes[0].depth - 1;
     this.nodes.push(this.root);
     parentlessNodes[0].hasParent = true;
   }
+
+  getGraph(): { nodes: any[]; edges: any[] } {
+    let nodes = [];
+    let edges = [];
+    let freq = new Array(this.nodes.length).fill(0);
+
+    for (let node of this.nodes) {
+      nodes.push(node.generateNode(freq));
+      let edge = node.generateEdge();
+      if (edge) {
+        edges.push(edge);
+      }
+    }
+
+    return { nodes, edges };
+  }
 }
 
-enum ClientStatus {
+export enum ClientStatus {
   CHILD_UNRESOLVED,
   RESOLVED,
   ERROR,
 }
 
-class GraphNode {
+export class GraphNode {
   id: number;
   status: ClientStatus;
   error: string | undefined;
   hasParent: boolean = false;
+  depth: number = 0;
   columns: string[] = [];
 
   constructor(id: number) {
@@ -91,18 +110,27 @@ class GraphNode {
     throw new Error("Not implemented");
   }
 
-  async clientResolve(
+  async resolve(
     tableNames: string[],
     queryHandler: RuntimeQueryHandler
   ): Promise<{ sqlQuery: SQLQuery | undefined }> {
     throw new Error("Not implemented");
   }
+
+  generateNode(freq: number[]): any {
+    throw new Error("Not implemented");
+  }
+
+  generateEdge(): any {
+    throw new Error("Not implemented");
+  }
 }
 
-class DataNode implements GraphNode {
+export class DataNode implements GraphNode {
   tableName: string;
   id: number;
   status: ClientStatus;
+  depth = 0;
   error: string | undefined;
   hasParent: boolean = false;
   columns: string[] = [];
@@ -113,7 +141,7 @@ class DataNode implements GraphNode {
     this.status = ClientStatus.CHILD_UNRESOLVED;
   }
 
-  async clientResolve(
+  async resolve(
     tableNames: string[],
     queryHandler: RuntimeQueryHandler
   ): Promise<{ sqlQuery: SQLQuery | undefined }> {
@@ -145,19 +173,31 @@ class DataNode implements GraphNode {
     };
   }
 
-  queryResolve(): { name: string; columns: string[]; sqlQuery: SQLQuery } {
-    throw new Error("Not implemented");
-  }
-
   getChildren(): GraphNode[] {
     return [];
   }
+
+  generateNode(freq: number[]): any {
+    return {
+      id: this.id,
+      type: "input",
+      data: { label: this.tableName },
+      position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
+      connectable: false,
+      sourcePosition: "right",
+    };
+  }
+
+  generateEdge(): any {
+    return undefined;
+  }
 }
 
-class RootNode implements GraphNode {
+export class RootNode implements GraphNode {
   id: number;
   status: ClientStatus;
   error: string | undefined;
+  depth: number = 0;
   child: GraphNode;
   hasParent: boolean = false;
   columns: string[] = [];
@@ -172,14 +212,14 @@ class RootNode implements GraphNode {
     return [this.child];
   }
 
-  async clientResolve(
+  async resolve(
     tableNames: string[],
     queryHandler: RuntimeQueryHandler
   ): Promise<{ sqlQuery: SQLQuery | undefined }> {
     let childQuery;
 
     if (this.child.status == ClientStatus.CHILD_UNRESOLVED) {
-      childQuery = await this.child.clientResolve(tableNames, queryHandler);
+      childQuery = await this.child.resolve(tableNames, queryHandler);
       this.columns = this.child.columns;
     } else if (this.child.status == ClientStatus.ERROR) {
       this.status = ClientStatus.ERROR;
@@ -191,6 +231,23 @@ class RootNode implements GraphNode {
 
     return { sqlQuery: childQuery.sqlQuery };
   }
-}
 
-export { Graph, GraphNode, DataNode, RootNode, ClientStatus };
+  generateNode(freq: number[]): any {
+    return {
+      id: "0",
+      type: "output",
+      data: { label: "Root" },
+      position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
+      connectable: false,
+      targetPosition: "left",
+    };
+  }
+
+  generateEdge(): any {
+    return {
+      id: `e${this.child.id}-${this.id}`,
+      source: this.child.id,
+      target: this.id,
+    };
+  }
+}

@@ -19,3 +19,5 @@ __exportStar(require("./errors/authentication-error"), exports);
 __exportStar(require("./middleware/error-handler"), exports);
 __exportStar(require("./middleware/check-validation-result"), exports);
 __exportStar(require("./middleware/parse-jwt-payload"), exports);
+__exportStar(require("./util/query-node"), exports);
+__exportStar(require("./util/sql-query"), exports);

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClientStatus = exports.RootNode = exports.DataNode = exports.GraphNode = exports.Graph = void 0;
+exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.Graph = exports.RuntimeQueryHandler = void 0;
 const sql_query_1 = require("./sql-query");
 class RuntimeQueryHandler {
     constructor(queryTableNames, queryColumns) {
@@ -17,6 +17,7 @@ class RuntimeQueryHandler {
         this.queryColumns = queryColumns;
     }
 }
+exports.RuntimeQueryHandler = RuntimeQueryHandler;
 class Graph {
     constructor(queryHandler) {
         this.i = 0;
@@ -40,12 +41,13 @@ class Graph {
             // start with parentless nodes and resolve them
             let parentlessNodes = this.nodes.filter((node) => !node.hasParent);
             for (let node of parentlessNodes) {
-                yield node.clientResolve(tablenames, this.queryHandler);
+                yield node.resolve(tablenames, this.queryHandler);
             }
         });
     }
     addDataNode(tableName) {
         this.nodes.push(new DataNode(this.i++, tableName));
+        this.nodes[this.nodes.length - 1].depth = 0;
     }
     addRootNode() {
         // check if only one node has no parent
@@ -59,8 +61,22 @@ class Graph {
         }
         // add root node
         this.root = new RootNode(this.i++, parentlessNodes[0]);
+        this.root.depth = parentlessNodes[0].depth - 1;
         this.nodes.push(this.root);
         parentlessNodes[0].hasParent = true;
+    }
+    getGraph() {
+        let nodes = [];
+        let edges = [];
+        let freq = new Array(this.nodes.length).fill(0);
+        for (let node of this.nodes) {
+            nodes.push(node.generateNode(freq));
+            let edge = node.generateEdge();
+            if (edge) {
+                edges.push(edge);
+            }
+        }
+        return { nodes, edges };
     }
 }
 exports.Graph = Graph;
@@ -69,11 +85,11 @@ var ClientStatus;
     ClientStatus[ClientStatus["CHILD_UNRESOLVED"] = 0] = "CHILD_UNRESOLVED";
     ClientStatus[ClientStatus["RESOLVED"] = 1] = "RESOLVED";
     ClientStatus[ClientStatus["ERROR"] = 2] = "ERROR";
-})(ClientStatus || (ClientStatus = {}));
-exports.ClientStatus = ClientStatus;
+})(ClientStatus = exports.ClientStatus || (exports.ClientStatus = {}));
 class GraphNode {
     constructor(id) {
         this.hasParent = false;
+        this.depth = 0;
         this.columns = [];
         this.id = id;
         this.status = ClientStatus.CHILD_UNRESOLVED;
@@ -81,22 +97,29 @@ class GraphNode {
     getChildren() {
         throw new Error("Not implemented");
     }
-    clientResolve(tableNames, queryHandler) {
+    resolve(tableNames, queryHandler) {
         return __awaiter(this, void 0, void 0, function* () {
             throw new Error("Not implemented");
         });
+    }
+    generateNode(freq) {
+        throw new Error("Not implemented");
+    }
+    generateEdge() {
+        throw new Error("Not implemented");
     }
 }
 exports.GraphNode = GraphNode;
 class DataNode {
     constructor(id, tableName) {
+        this.depth = 0;
         this.hasParent = false;
         this.columns = [];
         this.id = id;
         this.tableName = tableName;
         this.status = ClientStatus.CHILD_UNRESOLVED;
     }
-    clientResolve(tableNames, queryHandler) {
+    resolve(tableNames, queryHandler) {
         return __awaiter(this, void 0, void 0, function* () {
             if (!tableNames.includes(this.tableName)) {
                 this.status = ClientStatus.ERROR;
@@ -125,16 +148,27 @@ class DataNode {
             };
         });
     }
-    queryResolve() {
-        throw new Error("Not implemented");
-    }
     getChildren() {
         return [];
+    }
+    generateNode(freq) {
+        return {
+            id: this.id,
+            type: "input",
+            data: { label: this.tableName },
+            position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
+            connectable: false,
+            sourcePosition: "right",
+        };
+    }
+    generateEdge() {
+        return undefined;
     }
 }
 exports.DataNode = DataNode;
 class RootNode {
     constructor(id, child) {
+        this.depth = 0;
         this.hasParent = false;
         this.columns = [];
         this.id = id;
@@ -144,11 +178,11 @@ class RootNode {
     getChildren() {
         return [this.child];
     }
-    clientResolve(tableNames, queryHandler) {
+    resolve(tableNames, queryHandler) {
         return __awaiter(this, void 0, void 0, function* () {
             let childQuery;
             if (this.child.status == ClientStatus.CHILD_UNRESOLVED) {
-                childQuery = yield this.child.clientResolve(tableNames, queryHandler);
+                childQuery = yield this.child.resolve(tableNames, queryHandler);
                 this.columns = this.child.columns;
             }
             else if (this.child.status == ClientStatus.ERROR) {
@@ -161,6 +195,23 @@ class RootNode {
             }
             return { sqlQuery: childQuery.sqlQuery };
         });
+    }
+    generateNode(freq) {
+        return {
+            id: "0",
+            type: "output",
+            data: { label: "Root" },
+            position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
+            connectable: false,
+            targetPosition: "left",
+        };
+    }
+    generateEdge() {
+        return {
+            id: `e${this.child.id}-${this.id}`,
+            source: this.child.id,
+            target: this.id,
+        };
     }
 }
 exports.RootNode = RootNode;
