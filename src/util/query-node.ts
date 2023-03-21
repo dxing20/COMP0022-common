@@ -1,3 +1,5 @@
+import { SQLQuery } from "./sql-query";
+
 class RuntimeQueryHandler {
   queryTableNames: () => Promise<string[]>;
   queryColumns: (tableName: string) => Promise<string[]>;
@@ -190,3 +192,5 @@ class RootNode implements GraphNode {
     return { sqlQuery: childQuery.sqlQuery };
   }
 }
+
+export { Graph, GraphNode, DataNode, RootNode, ClientStatus };

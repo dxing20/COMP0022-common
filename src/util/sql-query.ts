@@ -163,3 +163,5 @@ class SQLQuery {
     return true;
   }
 }
+
+export { SQLQuery, SQLQueryParts };
