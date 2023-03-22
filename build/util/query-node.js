@@ -471,11 +471,11 @@ class FilterNode {
             sqlQuery.withIdCount += 1;
             sqlQuery.with = [{ subQuery: childQuery.sqlQuery }];
             this.columns = childNode.columns;
-            if (!this.columns.includes(this.selectedColumn)) {
-                this.status = ClientStatus.ERROR;
-                this.error = "Column not found";
-                return { sqlQuery: undefined };
-            }
+            // if ( !this.columns.includes(this.selectedColumn)) {
+            //   this.status = ClientStatus.ERROR;
+            //   this.error = "Column not found";
+            //   return { sqlQuery: undefined };
+            // }
             return { sqlQuery: sqlQuery };
         });
     }
