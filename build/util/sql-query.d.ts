@@ -7,6 +7,16 @@ declare enum SQLQueryParts {
     ORDER_BY = 5,
     LIMIT = 6
 }
+export declare enum Compare {
+    EQUAL = "=",
+    NOT_EQUAL = "!=",
+    GREATER_THAN = ">",
+    GREATER_THAN_OR_EQUAL = ">=",
+    LESS_THAN = "<",
+    LESS_THAN_OR_EQUAL = "<=",
+    LIKE = "LIKE",
+    NOT_LIKE = "NOT LIKE"
+}
 declare class SQLQuery {
     columns: string[];
     from: {
@@ -18,7 +28,11 @@ declare class SQLQuery {
         on1: string;
         on2: string;
     };
-    where: string[][];
+    where: {
+        column: string;
+        compare: Compare;
+        value: any;
+    }[];
     groupBy: string;
     having: string[][];
     orderBy: string[];
@@ -49,6 +63,7 @@ declare class SQLQuery {
     private resolveFrom;
     private resolveWith;
     private resolveSelect;
+    private resolveWhere;
     canContain(part: SQLQueryParts): boolean;
 }
 export { SQLQuery, SQLQueryParts };

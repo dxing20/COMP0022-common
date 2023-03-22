@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SQLQueryParts = exports.SQLQuery = void 0;
+exports.SQLQueryParts = exports.SQLQuery = exports.Compare = void 0;
 var SQLQueryParts;
 (function (SQLQueryParts) {
     SQLQueryParts[SQLQueryParts["FROM"] = 0] = "FROM";
@@ -12,6 +12,17 @@ var SQLQueryParts;
     SQLQueryParts[SQLQueryParts["LIMIT"] = 6] = "LIMIT";
 })(SQLQueryParts || (SQLQueryParts = {}));
 exports.SQLQueryParts = SQLQueryParts;
+var Compare;
+(function (Compare) {
+    Compare["EQUAL"] = "=";
+    Compare["NOT_EQUAL"] = "!=";
+    Compare["GREATER_THAN"] = ">";
+    Compare["GREATER_THAN_OR_EQUAL"] = ">=";
+    Compare["LESS_THAN"] = "<";
+    Compare["LESS_THAN_OR_EQUAL"] = "<=";
+    Compare["LIKE"] = "LIKE";
+    Compare["NOT_LIKE"] = "NOT LIKE";
+})(Compare = exports.Compare || (exports.Compare = {}));
 // From where groupby having select orderby limit
 class SQLQuery {
     constructor(from) {
@@ -127,6 +138,20 @@ class SQLQuery {
                 query.push(`$${params.length + 1}`);
                 params.push(columnName);
             }
+        }
+    }
+    resolveWhere(query, params) {
+        if (this.where.length === 0)
+            return;
+        query.push(" WHERE ");
+        for (let i = 0; i < this.where.length; i++) {
+            const where = this.where[i];
+            if (i > 0)
+                query.push(" AND ");
+            query.push(`$${params.length + 1}`);
+            params.push(where.column);
+            query.push(` ${where.compare} $${params.length + 1}`);
+            params.push(where.value);
         }
     }
     canContain(part) {

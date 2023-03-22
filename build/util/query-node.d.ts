@@ -1,4 +1,4 @@
-import { SQLQuery } from "./sql-query";
+import { Compare, SQLQuery } from "./sql-query";
 export declare enum NodeType {
     ROOT = 0,
     DATA = 1,
@@ -104,6 +104,25 @@ export declare class JoinNode implements GraphNode {
     on1: string;
     on2: string;
     constructor(id: number, child1: number, child2: number, joinType: JoinType, on1: string, on2: string);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
+        sqlQuery: SQLQuery | undefined;
+    }>;
+    generateNode(freq: number[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
+}
+export declare class FilterNode implements GraphNode {
+    id: number;
+    type: NodeType;
+    status: ClientStatus;
+    error: string | undefined;
+    depth: number;
+    child: number;
+    hasParent: boolean;
+    columns: string[];
+    compare: Compare;
+    selectedColumn: string;
+    value: any;
+    constructor(id: number, child: number, compare: Compare, selectedColumn: string, value: any);
     resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;

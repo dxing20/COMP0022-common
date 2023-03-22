@@ -7,6 +7,16 @@ enum SQLQueryParts {
   ORDER_BY, // single
   LIMIT, // single
 }
+export enum Compare {
+  EQUAL = "=",
+  NOT_EQUAL = "!=",
+  GREATER_THAN = ">",
+  GREATER_THAN_OR_EQUAL = ">=",
+  LESS_THAN = "<",
+  LESS_THAN_OR_EQUAL = "<=",
+  LIKE = "LIKE",
+  NOT_LIKE = "NOT LIKE",
+}
 
 // From where groupby having select orderby limit
 
@@ -21,7 +31,7 @@ class SQLQuery {
     on1: string;
     on2: string;
   };
-  public where: string[][]; // and >> or >> text
+  public where: { column: string; compare: Compare; value: any }[]; // and >> or >> text
   public groupBy: string = "";
   public having: string[][]; // and >> or >> text
   public orderBy: string[] = [];
@@ -166,6 +176,19 @@ class SQLQuery {
         query.push(`$${params.length + 1}`);
         params.push(columnName);
       }
+    }
+  }
+
+  private resolveWhere(query: string[], params: string[]) {
+    if (this.where.length === 0) return;
+    query.push(" WHERE ");
+    for (let i = 0; i < this.where.length; i++) {
+      const where = this.where[i];
+      if (i > 0) query.push(" AND ");
+      query.push(`$${params.length + 1}`);
+      params.push(where.column);
+      query.push(` ${where.compare} $${params.length + 1}`);
+      params.push(where.value);
     }
   }
 

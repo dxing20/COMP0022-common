@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.JoinNode = exports.JoinType = exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = exports.NodeType = void 0;
+exports.FilterNode = exports.JoinNode = exports.JoinType = exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = exports.NodeType = void 0;
 const sql_query_1 = require("./sql-query");
 var NodeType;
 (function (NodeType) {
@@ -414,3 +414,77 @@ class JoinNode {
     }
 }
 exports.JoinNode = JoinNode;
+class FilterNode {
+    constructor(id, child, compare, selectedColumn, value) {
+        this.type = NodeType.FILTER;
+        this.depth = 0;
+        this.hasParent = false;
+        this.columns = [];
+        this.id = id;
+        this.status = ClientStatus.CHILD_UNRESOLVED;
+        this.child = child;
+        this.compare = compare;
+        this.selectedColumn = selectedColumn;
+        this.value = value;
+    }
+    resolve(tableNames, queryHandler, otherNodes) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let childNode = otherNodes.find((node) => node.id === this.child);
+            let childQuery;
+            if (!childNode) {
+                this.status = ClientStatus.ERROR;
+                this.error = "Child node not found";
+                return { sqlQuery: undefined };
+            }
+            if (childNode.status == ClientStatus.CHILD_UNRESOLVED) {
+                childQuery = yield childNode.resolve(tableNames, queryHandler, otherNodes);
+            }
+            if (childNode.status == ClientStatus.ERROR || !(childQuery === null || childQuery === void 0 ? void 0 : childQuery.sqlQuery)) {
+                this.status = ClientStatus.ERROR;
+                this.error = "Child node has error";
+                return { sqlQuery: undefined };
+            }
+            const sqlQuery = new sql_query_1.SQLQuery({
+                join: undefined,
+                on1: "",
+                on2: "",
+                isIndex1: true,
+                isIndex2: false,
+                tableName1: "temp0",
+                tableName2: "",
+            });
+            sqlQuery.withIdCount += 1;
+            sqlQuery.with = [{ subQuery: childQuery.sqlQuery }];
+            this.columns = childNode.columns;
+            if (!this.columns.includes(this.selectedColumn)) {
+                this.status = ClientStatus.ERROR;
+                this.error = "Column not found";
+                return { sqlQuery: undefined };
+            }
+            return { sqlQuery: sqlQuery };
+        });
+    }
+    generateNode(freq) {
+        const f = freq[this.depth] * 50;
+        freq[this.depth] = freq[this.depth] + 1;
+        return {
+            id: `${this.id}`,
+            type: "default",
+            data: { label: `Filter ${this.id}` },
+            position: { x: 200 * this.depth, y: f },
+            connectable: false,
+            targetPosition: "left",
+            sourcePosition: "right",
+        };
+    }
+    generateEdge(otherNodes) {
+        return [
+            {
+                id: `e${this.child}-${this.id}`,
+                source: `${this.child}`,
+                target: `${this.id}`,
+            },
+        ];
+    }
+}
+exports.FilterNode = FilterNode;
