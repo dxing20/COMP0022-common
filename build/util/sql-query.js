@@ -59,14 +59,13 @@ class SQLQuery {
         this.resolveWith(query, params, verifiedTableNames);
         this.resolveSelect(query, params);
         this.resolveFrom(query, params, verifiedTableNames);
-        query.push(";");
         return { text: query.join(" "), params: [] };
     }
     resolveFrom(query, params, verifiedTableNames) {
         if (this.from.join) {
             query.push("FROM ");
             if (this.from.isIndex1) {
-                query.push(`temp${this.from.tableName1}`);
+                query.push(`${this.from.tableName1}`);
             }
             else {
                 this.checkTableName(this.from.tableName1, verifiedTableNames);
@@ -77,22 +76,22 @@ class SQLQuery {
             }
             query.push(this.from.join);
             if (this.from.isIndex2) {
-                query.push(`temp${this.from.tableName2}`);
+                query.push(`${this.from.tableName2}`);
             }
             else {
                 this.checkTableName(this.from.tableName2, verifiedTableNames);
                 params.push(this.from.tableName2);
             }
             query.push("ON");
-            query.push(`${this.paramIdCount++}`);
+            query.push(`$${this.paramIdCount++}`);
             params.push(this.from.on1);
             query.push("=");
-            query.push(`${this.paramIdCount++}`);
+            query.push(`$${this.paramIdCount++}`);
             params.push(this.from.on2);
         }
         else {
             if (this.from.isIndex1) {
-                query.push(`FROM temp${this.from.tableName1}`);
+                query.push(`FROM ${this.from.tableName1}`);
             }
             else {
                 this.checkTableName(this.from.tableName1, verifiedTableNames);
@@ -109,7 +108,7 @@ class SQLQuery {
             const { text, params } = withClause.subQuery.resolve({
                 verifiedTableNames,
             });
-            query.push(`temp${++this.withIdCount} AS (${text})`);
+            query.push(`temp${i} AS (${text})`);
             if (i < this.with.length - 1)
                 query.push(", ");
             parentParams.push(...params);
