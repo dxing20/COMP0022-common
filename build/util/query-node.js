@@ -109,6 +109,12 @@ class Graph {
         this.nodes[child1].hasParent = true;
         this.nodes[child2].hasParent = true;
     }
+    addFilterNode(child, column, compare, value) {
+        let newFilterNode = new FilterNode(this.i++, child, compare, column, value);
+        newFilterNode.depth = this.nodes[child].depth + 1;
+        this.nodes.push(newFilterNode);
+        this.nodes[child].hasParent = true;
+    }
     getGraph() {
         let nodes = [];
         let edges = [];

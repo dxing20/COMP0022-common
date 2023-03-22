@@ -26,6 +26,7 @@ export declare class Graph {
     addDataNode(tableName: string): void;
     addRootNode(): void;
     addJoinNode(child1: number, child2: number, joinType: JoinType, on1: string, on2: string): void;
+    addFilterNode(child: number, column: string, compare: Compare, value: string): void;
     getGraph(): {
         nodes: any[];
         edges: any[];

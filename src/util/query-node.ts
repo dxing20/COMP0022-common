@@ -132,6 +132,18 @@ export class Graph {
     this.nodes[child2].hasParent = true;
   }
 
+  addFilterNode(
+    child: number,
+    column: string,
+    compare: Compare,
+    value: string
+  ) {
+    let newFilterNode = new FilterNode(this.i++, child, compare, column, value);
+    newFilterNode.depth = this.nodes[child].depth + 1;
+    this.nodes.push(newFilterNode);
+    this.nodes[child].hasParent = true;
+  }
+
   getGraph(): { nodes: any[]; edges: any[] } {
     let nodes = [];
     let edges = [];
