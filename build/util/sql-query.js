@@ -145,13 +145,12 @@ class SQLQuery {
         }
         else if (this.groupBy != undefined) {
             query.push("SELECT ");
-            query.push(`$${params.length + 1}`);
-            params.push(this.groupBy.groupColumn);
+            query.push(`${this.groupBy.groupColumn}`);
+            params.push();
             query.push(", ");
             query.push(this.groupBy.aggregate);
             query.push("(");
-            query.push(`$${params.length + 1}`);
-            params.push(this.groupBy.aggregateColumn);
+            query.push(`${this.groupBy.aggregateColumn}`);
             query.push(")");
         }
         else {
@@ -160,8 +159,7 @@ class SQLQuery {
                 const columnName = this.columns[i];
                 if (i > 0)
                     query.push(", ");
-                query.push(`$${params.length + 1}`);
-                params.push(columnName);
+                query.push(`${columnName}`);
             }
         }
     }
@@ -173,8 +171,7 @@ class SQLQuery {
             const where = this.where[i];
             if (i > 0)
                 query.push(" AND ");
-            query.push(`$${params.length + 1}`);
-            params.push(where.column);
+            query.push(`${where.column}`);
             query.push(` ${where.compare} $${params.length + 1}`);
             params.push(where.value);
         }
@@ -187,8 +184,7 @@ class SQLQuery {
             const orderBy = this.orderBy[i];
             if (i > 0)
                 query.push(", ");
-            query.push(`$${params.length + 1}`);
-            params.push(orderBy.column);
+            query.push(`${orderBy.column}`);
             query.push(` ${orderBy.order}`);
         }
     }
@@ -196,8 +192,7 @@ class SQLQuery {
         if (this.groupBy == undefined)
             return;
         query.push(" GROUP BY ");
-        query.push(`$${params.length + 1}`);
-        params.push(this.groupBy.groupColumn);
+        query.push(`${this.groupBy.groupColumn}`);
     }
     canContain(part) {
         if (part < this.currentPart)

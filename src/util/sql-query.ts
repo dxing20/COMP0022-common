@@ -191,21 +191,19 @@ class SQLQuery {
       query.push("SELECT *");
     } else if (this.groupBy != undefined) {
       query.push("SELECT ");
-      query.push(`$${params.length + 1}`);
-      params.push(this.groupBy.groupColumn);
+      query.push(`${this.groupBy.groupColumn}`);
+      params.push();
       query.push(", ");
       query.push(this.groupBy.aggregate);
       query.push("(");
-      query.push(`$${params.length + 1}`);
-      params.push(this.groupBy.aggregateColumn);
+      query.push(`${this.groupBy.aggregateColumn}`);
       query.push(")");
     } else {
       query.push("SELECT ");
       for (let i = 0; i < this.columns.length; i++) {
         const columnName = this.columns[i];
         if (i > 0) query.push(", ");
-        query.push(`$${params.length + 1}`);
-        params.push(columnName);
+        query.push(`${columnName}`);
       }
     }
   }
@@ -216,8 +214,7 @@ class SQLQuery {
     for (let i = 0; i < this.where.length; i++) {
       const where = this.where[i];
       if (i > 0) query.push(" AND ");
-      query.push(`$${params.length + 1}`);
-      params.push(where.column);
+      query.push(`${where.column}`);
       query.push(` ${where.compare} $${params.length + 1}`);
       params.push(where.value);
     }
@@ -229,8 +226,7 @@ class SQLQuery {
     for (let i = 0; i < this.orderBy.length; i++) {
       const orderBy = this.orderBy[i];
       if (i > 0) query.push(", ");
-      query.push(`$${params.length + 1}`);
-      params.push(orderBy.column);
+      query.push(`${orderBy.column}`);
       query.push(` ${orderBy.order}`);
     }
   }
@@ -239,8 +235,7 @@ class SQLQuery {
     if (this.groupBy == undefined) return;
     query.push(" GROUP BY ");
 
-    query.push(`$${params.length + 1}`);
-    params.push(this.groupBy.groupColumn);
+    query.push(`${this.groupBy.groupColumn}`);
   }
 
   public canContain(part: SQLQueryParts): boolean {
