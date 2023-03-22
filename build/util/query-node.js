@@ -155,6 +155,15 @@ const cloneGraph = (graph) => {
             newNode.columns = [...node.columns];
             return newNode;
         }
+        else if (node instanceof FilterNode) {
+            const newNode = new FilterNode(node.id, node.child, node.compare, node.selectedColumn, node.value);
+            newNode.status = node.status;
+            newNode.depth = node.depth;
+            newNode.error = node.error;
+            newNode.hasParent = node.hasParent;
+            newNode.columns = [...node.columns];
+            return newNode;
+        }
         else {
             throw new Error("Unknown node type");
         }
