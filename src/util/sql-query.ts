@@ -102,9 +102,12 @@ class SQLQuery {
   ) {
     if (this.from.join) {
       query.push("FROM ");
-      query.push(`$${params.length + 1}`);
-      this.checkTableName(this.from.tableName1, verifiedTableNames);
-      params.push(this.from.tableName1);
+      if (this.from.isIndex1) {
+        query.push(`temp${this.from.tableName1}`);
+      } else {
+        this.checkTableName(this.from.tableName1, verifiedTableNames);
+        params.push(this.from.tableName1);
+      }
 
       if (
         !["LEFT JOIN", "RIGHT JOIN", "INNER JOIN", "FULL JOIN"].includes(
@@ -114,11 +117,18 @@ class SQLQuery {
         throw new Error(`Invalid join type ${this.from.join}`);
       }
       query.push(this.from.join);
-      query.push(`?(${this.from.tableName2})?`);
+      if (this.from.isIndex2) {
+        query.push(`temp${this.from.tableName2}`);
+      } else {
+        this.checkTableName(this.from.tableName2, verifiedTableNames);
+        params.push(this.from.tableName2);
+      }
       query.push("ON");
-      query.push(`?(${this.from.on1})?`);
+      query.push(`${this.paramIdCount++}`);
+      params.push(this.from.on1);
       query.push("=");
-      query.push(`?(${this.from.on2})?`);
+      query.push(`${this.paramIdCount++}`);
+      params.push(this.from.on2);
     } else {
       if (this.from.isIndex1) {
         query.push(`FROM temp${this.from.tableName1}`);
@@ -144,6 +154,7 @@ class SQLQuery {
       query.push(`temp${++this.withIdCount} AS (${text})`);
       if (i < this.with.length - 1) query.push(", ");
       parentParams.push(...params);
+      this.paramIdCount += params.length;
     }
   }
 
