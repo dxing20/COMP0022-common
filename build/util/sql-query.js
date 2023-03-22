@@ -83,11 +83,9 @@ class SQLQuery {
                 params.push(this.from.tableName2);
             }
             query.push("ON");
-            query.push(`$${this.paramIdCount++}`);
-            params.push(`${this.from.tableName1}.${this.from.on1}`);
+            query.push(`${this.from.tableName1}.${this.from.on1}`);
             query.push("=");
-            query.push(`$${this.paramIdCount++}`);
-            params.push(`${this.from.tableName2}.${this.from.on2}`);
+            query.push(`${this.from.tableName2}.${this.from.on2}`);
         }
         else {
             if (this.from.isIndex1) {
