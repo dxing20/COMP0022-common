@@ -125,8 +125,7 @@ class SQLQuery {
       // query.push(`${this.from.tableName1}.${this.from.on1}`);
       // query.push("=");
       // query.push(`${this.from.tableName2}.${this.from.on2}`);
-      query.push(`USING ($${this.paramIdCount++})`);
-      params.push(this.from.on1);
+      query.push(`USING ${this.from.on1}`);
     } else {
       if (this.from.isIndex1) {
         query.push(`FROM ${this.from.tableName1}`);
