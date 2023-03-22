@@ -1,4 +1,4 @@
-import { Compare, Order, SQLQuery } from "./sql-query";
+import { Aggregate, Compare, Order, SQLQuery } from "./sql-query";
 export declare enum NodeType {
     ROOT = 0,
     DATA = 1,
@@ -31,6 +31,7 @@ export declare class Graph {
         column: string;
         order: Order;
     }[]): void;
+    addAggregateNode(child: number, aggregate: Aggregate, groupColumn: string, aggregateColumn: string): void;
     getGraph(): {
         nodes: any[];
         edges: any[];
@@ -151,6 +152,25 @@ export declare class SortNode implements GraphNode {
         column: string;
         order: Order;
     }[]);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
+        sqlQuery: SQLQuery | undefined;
+    }>;
+    generateNode(freq: number[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
+}
+export declare class AggregateNode implements GraphNode {
+    id: number;
+    type: NodeType;
+    status: ClientStatus;
+    error: string | undefined;
+    depth: number;
+    child: number;
+    hasParent: boolean;
+    columns: string[];
+    aggregate: Aggregate;
+    groupColumn: string;
+    aggregateColumn: string;
+    constructor(id: number, child: number, aggregate: Aggregate, groupColumn: string, aggregateColumn: string);
     resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;

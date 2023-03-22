@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SortNode = exports.FilterNode = exports.JoinNode = exports.JoinType = exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = exports.NodeType = void 0;
+exports.AggregateNode = exports.SortNode = exports.FilterNode = exports.JoinNode = exports.JoinType = exports.RootNode = exports.DataNode = exports.GraphNode = exports.ClientStatus = exports.cloneGraph = exports.Graph = exports.RuntimeQueryHandler = exports.NodeType = void 0;
 const sql_query_1 = require("./sql-query");
 var NodeType;
 (function (NodeType) {
@@ -121,6 +121,12 @@ class Graph {
         this.nodes.push(newSortNode);
         this.nodes[child].hasParent = true;
     }
+    addAggregateNode(child, aggregate, groupColumn, aggregateColumn) {
+        let newAggregateNode = new AggregateNode(this.i++, child, aggregate, groupColumn, aggregateColumn);
+        newAggregateNode.depth = this.nodes[child].depth + 1;
+        this.nodes.push(newAggregateNode);
+        this.nodes[child].hasParent = true;
+    }
     getGraph() {
         let nodes = [];
         let edges = [];
@@ -178,6 +184,15 @@ const cloneGraph = (graph) => {
         }
         else if (node instanceof SortNode) {
             const newNode = new SortNode(node.id, node.child, node.sortOrder);
+            newNode.status = node.status;
+            newNode.depth = node.depth;
+            newNode.error = node.error;
+            newNode.hasParent = node.hasParent;
+            newNode.columns = [...node.columns];
+            return newNode;
+        }
+        else if (node instanceof AggregateNode) {
+            const newNode = new AggregateNode(node.id, node.child, node.aggregate, node.groupColumn, node.aggregateColumn);
             newNode.status = node.status;
             newNode.depth = node.depth;
             newNode.error = node.error;
@@ -589,3 +604,77 @@ class SortNode {
     }
 }
 exports.SortNode = SortNode;
+class AggregateNode {
+    constructor(id, child, aggregate, groupColumn, aggregateColumn) {
+        this.type = NodeType.AGGREGATE;
+        this.depth = 0;
+        this.hasParent = false;
+        this.columns = [];
+        this.id = id;
+        this.status = ClientStatus.CHILD_UNRESOLVED;
+        this.child = child;
+        this.aggregate = aggregate;
+        this.groupColumn = groupColumn;
+        this.aggregateColumn = aggregateColumn;
+    }
+    resolve(tableNames, queryHandler, otherNodes) {
+        return __awaiter(this, void 0, void 0, function* () {
+            let childNode = otherNodes.find((node) => node.id === this.child);
+            let childQuery;
+            if (!childNode) {
+                this.status = ClientStatus.ERROR;
+                this.error = "Child node not found";
+                return { sqlQuery: undefined };
+            }
+            if (childNode.status == ClientStatus.CHILD_UNRESOLVED) {
+                childQuery = yield childNode.resolve(tableNames, queryHandler, otherNodes);
+            }
+            if (childNode.status == ClientStatus.ERROR || !(childQuery === null || childQuery === void 0 ? void 0 : childQuery.sqlQuery)) {
+                this.status = ClientStatus.ERROR;
+                this.error = "Child node has error";
+                return { sqlQuery: undefined };
+            }
+            const sqlQuery = new sql_query_1.SQLQuery({
+                join: undefined,
+                on1: "",
+                on2: "",
+                isIndex1: true,
+                isIndex2: false,
+                tableName1: "temp0",
+                tableName2: "",
+            });
+            sqlQuery.withIdCount += 1;
+            sqlQuery.with = [{ subQuery: childQuery.sqlQuery }];
+            sqlQuery.groupBy = {
+                groupColumn: this.groupColumn,
+                aggregate: this.aggregate,
+                aggregateColumn: this.aggregateColumn,
+            };
+            this.columns = childNode.columns;
+            return { sqlQuery: sqlQuery };
+        });
+    }
+    generateNode(freq) {
+        const f = freq[this.depth] * 50;
+        freq[this.depth] = freq[this.depth] + 1;
+        return {
+            id: `${this.id}`,
+            type: "default",
+            data: { label: `Aggregate ${this.id}` },
+            position: { x: 200 * this.depth, y: f },
+            connectable: false,
+            targetPosition: "left",
+            sourcePosition: "right",
+        };
+    }
+    generateEdge(otherNodes) {
+        return [
+            {
+                id: `e${this.child}-${this.id}`,
+                source: `${this.child}`,
+                target: `${this.id}`,
+            },
+        ];
+    }
+}
+exports.AggregateNode = AggregateNode;

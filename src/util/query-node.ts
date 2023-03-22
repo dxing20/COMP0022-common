@@ -1,4 +1,4 @@
-import { Compare, Order, SQLQuery } from "./sql-query";
+import { Aggregate, Compare, Order, SQLQuery } from "./sql-query";
 
 export enum NodeType {
   ROOT,
@@ -151,6 +151,24 @@ export class Graph {
     this.nodes[child].hasParent = true;
   }
 
+  addAggregateNode(
+    child: number,
+    aggregate: Aggregate,
+    groupColumn: string,
+    aggregateColumn: string
+  ) {
+    let newAggregateNode = new AggregateNode(
+      this.i++,
+      child,
+      aggregate,
+      groupColumn,
+      aggregateColumn
+    );
+    newAggregateNode.depth = this.nodes[child].depth + 1;
+    this.nodes.push(newAggregateNode);
+    this.nodes[child].hasParent = true;
+  }
+
   getGraph(): { nodes: any[]; edges: any[] } {
     let nodes = [];
     let edges = [];
@@ -219,6 +237,20 @@ export const cloneGraph = (graph: Graph): Graph => {
       return newNode;
     } else if (node instanceof SortNode) {
       const newNode = new SortNode(node.id, node.child, node.sortOrder);
+      newNode.status = node.status;
+      newNode.depth = node.depth;
+      newNode.error = node.error;
+      newNode.hasParent = node.hasParent;
+      newNode.columns = [...node.columns];
+      return newNode;
+    } else if (node instanceof AggregateNode) {
+      const newNode = new AggregateNode(
+        node.id,
+        node.child,
+        node.aggregate,
+        node.groupColumn,
+        node.aggregateColumn
+      );
       newNode.status = node.status;
       newNode.depth = node.depth;
       newNode.error = node.error;
@@ -734,6 +766,110 @@ export class SortNode implements GraphNode {
       id: `${this.id}`,
       type: "default",
       data: { label: `Sort ${this.id}` },
+      position: { x: 200 * this.depth, y: f },
+      connectable: false,
+      targetPosition: "left",
+      sourcePosition: "right",
+    };
+  }
+
+  generateEdge(otherNodes: GraphNode[]): any[] {
+    return [
+      {
+        id: `e${this.child}-${this.id}`,
+        source: `${this.child}`,
+        target: `${this.id}`,
+      },
+    ];
+  }
+}
+
+export class AggregateNode implements GraphNode {
+  id: number;
+  type = NodeType.AGGREGATE;
+  status: ClientStatus;
+  error: string | undefined;
+  depth: number = 0;
+  child: number;
+  hasParent: boolean = false;
+  columns: string[] = [];
+  aggregate: Aggregate;
+  groupColumn: string;
+  aggregateColumn: string;
+
+  constructor(
+    id: number,
+    child: number,
+    aggregate: Aggregate,
+    groupColumn: string,
+    aggregateColumn: string
+  ) {
+    this.id = id;
+    this.status = ClientStatus.CHILD_UNRESOLVED;
+    this.child = child;
+    this.aggregate = aggregate;
+    this.groupColumn = groupColumn;
+    this.aggregateColumn = aggregateColumn;
+  }
+
+  async resolve(
+    tableNames: string[],
+    queryHandler: RuntimeQueryHandler,
+    otherNodes: GraphNode[]
+  ): Promise<{ sqlQuery: SQLQuery | undefined }> {
+    let childNode = otherNodes.find((node) => node.id === this.child);
+    let childQuery;
+    if (!childNode) {
+      this.status = ClientStatus.ERROR;
+      this.error = "Child node not found";
+      return { sqlQuery: undefined };
+    }
+
+    if (childNode.status == ClientStatus.CHILD_UNRESOLVED) {
+      childQuery = await childNode.resolve(
+        tableNames,
+        queryHandler,
+        otherNodes
+      );
+    }
+
+    if (childNode.status == ClientStatus.ERROR || !childQuery?.sqlQuery) {
+      this.status = ClientStatus.ERROR;
+      this.error = "Child node has error";
+      return { sqlQuery: undefined };
+    }
+
+    const sqlQuery: SQLQuery = new SQLQuery({
+      join: undefined,
+      on1: "",
+      on2: "",
+      isIndex1: true,
+      isIndex2: false,
+      tableName1: "temp0",
+      tableName2: "",
+    });
+
+    sqlQuery.withIdCount += 1;
+
+    sqlQuery.with = [{ subQuery: childQuery.sqlQuery }];
+    sqlQuery.groupBy = {
+      groupColumn: this.groupColumn,
+      aggregate: this.aggregate,
+      aggregateColumn: this.aggregateColumn,
+    };
+
+    this.columns = childNode.columns;
+
+    return { sqlQuery: sqlQuery };
+  }
+
+  generateNode(freq: number[]): any {
+    const f: number = freq[this.depth] * 50;
+    freq[this.depth] = freq[this.depth] + 1;
+    return {
+      id: `${this.id}`,
+      type: "default",
+      data: { label: `Aggregate ${this.id}` },
       position: { x: 200 * this.depth, y: f },
       connectable: false,
       targetPosition: "left",

@@ -21,6 +21,13 @@ export declare enum Order {
     ASC = "ASC",
     DESC = "DESC"
 }
+export declare enum Aggregate {
+    SUM = "SUM",
+    AVG = "AVG",
+    MIN = "MIN",
+    MAX = "MAX",
+    COUNT = "COUNT"
+}
 declare class SQLQuery {
     columns: string[];
     from: {
@@ -37,7 +44,11 @@ declare class SQLQuery {
         compare: Compare;
         value: any;
     }[];
-    groupBy: string;
+    groupBy: {
+        groupColumn: string;
+        aggregateColumn: string;
+        aggregate: Aggregate;
+    } | undefined;
     having: string[][];
     orderBy: {
         order: Order;
@@ -72,6 +83,7 @@ declare class SQLQuery {
     private resolveSelect;
     private resolveWhere;
     private resolveOrderBy;
+    private resolveAggregate;
     canContain(part: SQLQueryParts): boolean;
 }
 export { SQLQuery, SQLQueryParts };

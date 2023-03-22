@@ -23,6 +23,14 @@ export enum Order {
   DESC = "DESC",
 }
 
+export enum Aggregate {
+  SUM = "SUM",
+  AVG = "AVG",
+  MIN = "MIN",
+  MAX = "MAX",
+  COUNT = "COUNT",
+}
+
 // From where groupby having select orderby limit
 
 class SQLQuery {
@@ -37,7 +45,13 @@ class SQLQuery {
     on2: string;
   };
   public where: { column: string; compare: Compare; value: any }[]; // and >> or >> text
-  public groupBy: string = "";
+  public groupBy:
+    | {
+        groupColumn: string;
+        aggregateColumn: string;
+        aggregate: Aggregate;
+      }
+    | undefined;
   public having: string[][]; // and >> or >> text
   public orderBy: { order: Order; column: string }[] = [];
   public limit: number;
@@ -60,7 +74,7 @@ class SQLQuery {
     this.columns = [];
     this.from = from;
     this.where = [];
-    this.groupBy = "";
+    this.groupBy = undefined;
     this.having = [];
     this.orderBy = [];
     this.limit = 0;
@@ -175,6 +189,16 @@ class SQLQuery {
   private resolveSelect(query: string[], params: string[]) {
     if (this.columns.length === 0) {
       query.push("SELECT *");
+    } else if (this.groupBy != undefined) {
+      query.push("SELECT ");
+      query.push(`$${params.length + 1}`);
+      params.push(this.groupBy.groupColumn);
+      query.push(", ");
+      query.push(this.groupBy.aggregate);
+      query.push("(");
+      query.push(`$${params.length + 1}`);
+      params.push(this.groupBy.aggregateColumn);
+      query.push(")");
     } else {
       query.push("SELECT ");
       for (let i = 0; i < this.columns.length; i++) {
@@ -209,6 +233,14 @@ class SQLQuery {
       params.push(orderBy.column);
       query.push(` ${orderBy.order}`);
     }
+  }
+
+  private resolveAggregate(query: string[], params: string[]) {
+    if (this.groupBy == undefined) return;
+    query.push(" GROUP BY ");
+
+    query.push(`$${params.length + 1}`);
+    params.push(this.groupBy.groupColumn);
   }
 
   public canContain(part: SQLQueryParts): boolean {

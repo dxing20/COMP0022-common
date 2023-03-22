@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SQLQueryParts = exports.SQLQuery = exports.Order = exports.Compare = void 0;
+exports.SQLQueryParts = exports.SQLQuery = exports.Aggregate = exports.Order = exports.Compare = void 0;
 var SQLQueryParts;
 (function (SQLQueryParts) {
     SQLQueryParts[SQLQueryParts["FROM"] = 0] = "FROM";
@@ -28,11 +28,18 @@ var Order;
     Order["ASC"] = "ASC";
     Order["DESC"] = "DESC";
 })(Order = exports.Order || (exports.Order = {}));
+var Aggregate;
+(function (Aggregate) {
+    Aggregate["SUM"] = "SUM";
+    Aggregate["AVG"] = "AVG";
+    Aggregate["MIN"] = "MIN";
+    Aggregate["MAX"] = "MAX";
+    Aggregate["COUNT"] = "COUNT";
+})(Aggregate = exports.Aggregate || (exports.Aggregate = {}));
 // From where groupby having select orderby limit
 class SQLQuery {
     constructor(from) {
         this.columns = [];
-        this.groupBy = "";
         this.orderBy = [];
         this.with = [];
         this.paramIdCount = 1;
@@ -40,7 +47,7 @@ class SQLQuery {
         this.columns = [];
         this.from = from;
         this.where = [];
-        this.groupBy = "";
+        this.groupBy = undefined;
         this.having = [];
         this.orderBy = [];
         this.limit = 0;
@@ -136,6 +143,17 @@ class SQLQuery {
         if (this.columns.length === 0) {
             query.push("SELECT *");
         }
+        else if (this.groupBy != undefined) {
+            query.push("SELECT ");
+            query.push(`$${params.length + 1}`);
+            params.push(this.groupBy.groupColumn);
+            query.push(", ");
+            query.push(this.groupBy.aggregate);
+            query.push("(");
+            query.push(`$${params.length + 1}`);
+            params.push(this.groupBy.aggregateColumn);
+            query.push(")");
+        }
         else {
             query.push("SELECT ");
             for (let i = 0; i < this.columns.length; i++) {
@@ -173,6 +191,13 @@ class SQLQuery {
             params.push(orderBy.column);
             query.push(` ${orderBy.order}`);
         }
+    }
+    resolveAggregate(query, params) {
+        if (this.groupBy == undefined)
+            return;
+        query.push(" GROUP BY ");
+        query.push(`$${params.length + 1}`);
+        params.push(this.groupBy.groupColumn);
     }
     canContain(part) {
         if (part < this.currentPart)
