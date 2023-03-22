@@ -19,7 +19,7 @@ class SQLQuery {
         this.groupBy = "";
         this.orderBy = [];
         this.with = [];
-        this.paramIdCount = 0;
+        this.paramIdCount = 1;
         this.withIdCount = 0;
         this.columns = [];
         this.from = from;

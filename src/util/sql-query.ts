@@ -30,7 +30,7 @@ class SQLQuery {
   public with: { subQuery: SQLQuery }[] = [];
 
   public currentPart: SQLQueryParts;
-  public paramIdCount: number = 0;
+  public paramIdCount: number = 1;
   public withIdCount: number = 0;
 
   constructor(from: {
