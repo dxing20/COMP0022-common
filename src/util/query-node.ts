@@ -426,8 +426,8 @@ export class JoinNode implements GraphNode {
     if (
       child1.status == ClientStatus.ERROR ||
       child2.status == ClientStatus.ERROR ||
-      !childQuery1 ||
-      !childQuery2
+      !childQuery1?.sqlQuery ||
+      !childQuery2?.sqlQuery
     ) {
       this.status = ClientStatus.ERROR;
       this.error = "Child node has error";
@@ -462,7 +462,10 @@ export class JoinNode implements GraphNode {
       return { sqlQuery: undefined };
     }
 
-    sqlQuery.with = [childQuery1!, childQuery2!];
+    sqlQuery.with = [
+      { subQuery: childQuery1.sqlQuery },
+      { subQuery: childQuery1.sqlQuery },
+    ];
 
     this.columns = child1.columns.concat(child2.columns);
     this.columns = this.columns.filter((value) => !overlap.includes(value));
@@ -476,7 +479,7 @@ export class JoinNode implements GraphNode {
     freq[this.depth] = freq[this.depth] + 1;
     return {
       id: `${this.id}`,
-      type: "output",
+      type: "default",
       data: { label: `JOIN ${this.id}` },
       position: { x: 200 * this.depth, y: f },
       connectable: false,
