@@ -234,7 +234,7 @@ class DataNode {
         return {
             id: `${this.id}`,
             type: "input",
-            data: { label: this.tableName },
+            data: { label: `${this.tableName} ${this.id}` },
             position: { x: 200 * this.depth, y: freq[this.depth]++ * 50 },
             connectable: false,
             sourcePosition: "right",
@@ -285,7 +285,7 @@ class RootNode {
         return {
             id: `${this.id}`,
             type: "output",
-            data: { label: "Root" },
+            data: { label: `ROOT ${this.id}` },
             position: { x: 200 * this.depth, y: f },
             connectable: false,
             targetPosition: "left",
@@ -383,7 +383,7 @@ class JoinNode {
         return {
             id: `${this.id}`,
             type: "output",
-            data: { label: `JOIN` },
+            data: { label: `JOIN ${this.id}` },
             position: { x: 200 * this.depth, y: f },
             connectable: false,
             targetPosition: "left",
