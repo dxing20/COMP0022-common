@@ -82,10 +82,12 @@ class SQLQuery {
                 this.checkTableName(this.from.tableName2, verifiedTableNames);
                 params.push(this.from.tableName2);
             }
-            query.push("ON");
-            query.push(`${this.from.tableName1}.${this.from.on1}`);
-            query.push("=");
-            query.push(`${this.from.tableName2}.${this.from.on2}`);
+            // query.push("ON");
+            // query.push(`${this.from.tableName1}.${this.from.on1}`);
+            // query.push("=");
+            // query.push(`${this.from.tableName2}.${this.from.on2}`);
+            query.push(`USING ($${this.paramIdCount++})`);
+            params.push(this.from.on1);
         }
         else {
             if (this.from.isIndex1) {
