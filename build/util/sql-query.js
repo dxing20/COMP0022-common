@@ -59,7 +59,7 @@ class SQLQuery {
         this.resolveWith(query, params, verifiedTableNames);
         this.resolveSelect(query, params);
         this.resolveFrom(query, params, verifiedTableNames);
-        return { text: query.join(" "), params: [] };
+        return { text: query.join(" "), params: params };
     }
     resolveFrom(query, params, verifiedTableNames) {
         if (this.from.join) {

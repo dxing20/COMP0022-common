@@ -90,7 +90,7 @@ class SQLQuery {
     this.resolveSelect(query, params);
     this.resolveFrom(query, params, verifiedTableNames);
 
-    return { text: query.join(" "), params: [] };
+    return { text: query.join(" "), params: params };
   }
 
   private resolveFrom(
