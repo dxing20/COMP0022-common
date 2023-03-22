@@ -119,6 +119,7 @@ class SQLQuery {
     this.resolveSelect(query, params);
     this.resolveFrom(query, params, verifiedTableNames);
     this.resolveWhere(query, params);
+    this.resolveAggregate(query, params);
     this.resolveOrderBy(query, params);
 
     return { text: query.join(" "), params: params };
@@ -187,7 +188,7 @@ class SQLQuery {
   }
 
   private resolveSelect(query: string[], params: string[]) {
-    if (this.columns.length === 0) {
+    if (this.columns.length === 0 && this.groupBy === undefined) {
       query.push("SELECT *");
     } else if (this.groupBy != undefined) {
       query.push("SELECT ");

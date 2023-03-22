@@ -650,7 +650,10 @@ class AggregateNode {
                 aggregate: this.aggregate,
                 aggregateColumn: this.aggregateColumn,
             };
-            this.columns = childNode.columns;
+            this.columns = [
+                this.groupColumn,
+                `${this.aggregate}(${this.aggregateColumn})`,
+            ];
             return { sqlQuery: sqlQuery };
         });
     }
