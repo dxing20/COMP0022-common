@@ -18,6 +18,11 @@ export enum Compare {
   NOT_LIKE = "NOT LIKE",
 }
 
+export enum Order {
+  ASC = "ASC",
+  DESC = "DESC",
+}
+
 // From where groupby having select orderby limit
 
 class SQLQuery {
@@ -34,7 +39,7 @@ class SQLQuery {
   public where: { column: string; compare: Compare; value: any }[]; // and >> or >> text
   public groupBy: string = "";
   public having: string[][]; // and >> or >> text
-  public orderBy: string[] = [];
+  public orderBy: { order: Order; column: string }[] = [];
   public limit: number;
 
   public with: { subQuery: SQLQuery }[] = [];
@@ -100,6 +105,7 @@ class SQLQuery {
     this.resolveSelect(query, params);
     this.resolveFrom(query, params, verifiedTableNames);
     this.resolveWhere(query, params);
+    this.resolveOrderBy(query, params);
 
     return { text: query.join(" "), params: params };
   }
@@ -190,6 +196,18 @@ class SQLQuery {
       params.push(where.column);
       query.push(` ${where.compare} $${params.length + 1}`);
       params.push(where.value);
+    }
+  }
+
+  private resolveOrderBy(query: string[], params: string[]) {
+    if (this.orderBy.length === 0) return;
+    query.push(" ORDER BY ");
+    for (let i = 0; i < this.orderBy.length; i++) {
+      const orderBy = this.orderBy[i];
+      if (i > 0) query.push(", ");
+      query.push(`$${params.length + 1}`);
+      params.push(orderBy.column);
+      query.push(` ${orderBy.order}`);
     }
   }
 

@@ -1,4 +1,4 @@
-import { Compare, SQLQuery } from "./sql-query";
+import { Compare, Order, SQLQuery } from "./sql-query";
 export declare enum NodeType {
     ROOT = 0,
     DATA = 1,
@@ -27,6 +27,10 @@ export declare class Graph {
     addRootNode(): void;
     addJoinNode(child1: number, child2: number, joinType: JoinType, on1: string, on2: string): void;
     addFilterNode(child: number, column: string, compare: Compare, value: string): void;
+    addSortNode(child: number, sortOrder: {
+        column: string;
+        order: Order;
+    }[]): void;
     getGraph(): {
         nodes: any[];
         edges: any[];
@@ -124,6 +128,29 @@ export declare class FilterNode implements GraphNode {
     selectedColumn: string;
     value: any;
     constructor(id: number, child: number, compare: Compare, selectedColumn: string, value: any);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
+        sqlQuery: SQLQuery | undefined;
+    }>;
+    generateNode(freq: number[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
+}
+export declare class SortNode implements GraphNode {
+    id: number;
+    type: NodeType;
+    status: ClientStatus;
+    error: string | undefined;
+    depth: number;
+    child: number;
+    hasParent: boolean;
+    columns: string[];
+    sortOrder: {
+        column: string;
+        order: Order;
+    }[];
+    constructor(id: number, child: number, sortOrder: {
+        column: string;
+        order: Order;
+    }[]);
     resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;

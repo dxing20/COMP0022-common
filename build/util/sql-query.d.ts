@@ -17,6 +17,10 @@ export declare enum Compare {
     LIKE = "LIKE",
     NOT_LIKE = "NOT LIKE"
 }
+export declare enum Order {
+    ASC = "ASC",
+    DESC = "DESC"
+}
 declare class SQLQuery {
     columns: string[];
     from: {
@@ -35,7 +39,10 @@ declare class SQLQuery {
     }[];
     groupBy: string;
     having: string[][];
-    orderBy: string[];
+    orderBy: {
+        order: Order;
+        column: string;
+    }[];
     limit: number;
     with: {
         subQuery: SQLQuery;
@@ -64,6 +71,7 @@ declare class SQLQuery {
     private resolveWith;
     private resolveSelect;
     private resolveWhere;
+    private resolveOrderBy;
     canContain(part: SQLQueryParts): boolean;
 }
 export { SQLQuery, SQLQueryParts };
