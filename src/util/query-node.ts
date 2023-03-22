@@ -464,7 +464,7 @@ export class JoinNode implements GraphNode {
 
     sqlQuery.with = [
       { subQuery: childQuery1.sqlQuery },
-      { subQuery: childQuery1.sqlQuery },
+      { subQuery: childQuery2.sqlQuery },
     ];
 
     this.columns = child1.columns.concat(child2.columns);
