@@ -820,7 +820,7 @@ class SelectNode {
             sqlQuery.withIdCount += 1;
             sqlQuery.with = [{ subQuery: childQuery.sqlQuery }];
             sqlQuery.columns = this.selection;
-            this.columns = this.selection.map((s) => s.name);
+            this.columns = this.selection.map((s) => s.as);
             return { sqlQuery: sqlQuery };
         });
     }

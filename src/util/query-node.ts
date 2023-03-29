@@ -1077,7 +1077,7 @@ export class SelectNode implements GraphNode {
     sqlQuery.with = [{ subQuery: childQuery.sqlQuery }];
     sqlQuery.columns = this.selection;
 
-    this.columns = this.selection.map((s) => s.name);
+    this.columns = this.selection.map((s) => s.as);
 
     return { sqlQuery: sqlQuery };
   }
