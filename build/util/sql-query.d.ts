@@ -29,7 +29,10 @@ export declare enum Aggregate {
     COUNT = "COUNT"
 }
 declare class SQLQuery {
-    columns: string[];
+    columns: {
+        name: string;
+        as: string;
+    }[];
     from: {
         join: string | undefined;
         isIndex1: boolean;
@@ -54,7 +57,7 @@ declare class SQLQuery {
         order: Order;
         column: string;
     }[];
-    limit: number;
+    limit: number | undefined;
     with: {
         subQuery: SQLQuery;
     }[];
@@ -70,7 +73,6 @@ declare class SQLQuery {
         on1: string;
         on2: string;
     });
-    private joinLogicStatements;
     private checkTableName;
     resolve({ verifiedTableNames }: {
         verifiedTableNames: Set<string>;
@@ -84,6 +86,7 @@ declare class SQLQuery {
     private resolveWhere;
     private resolveOrderBy;
     private resolveAggregate;
+    private resolveLimit;
     canContain(part: SQLQueryParts): boolean;
 }
 export { SQLQuery, SQLQueryParts };

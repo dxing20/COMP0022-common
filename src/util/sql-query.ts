@@ -34,7 +34,7 @@ export enum Aggregate {
 // From where groupby having select orderby limit
 
 class SQLQuery {
-  public columns: string[] = [];
+  public columns: { name: string; as: string }[] = [];
   public from: {
     join: string | undefined;
     isIndex1: boolean;
@@ -54,7 +54,7 @@ class SQLQuery {
     | undefined;
   public having: string[][]; // and >> or >> text
   public orderBy: { order: Order; column: string }[] = [];
-  public limit: number;
+  public limit: number | undefined;
 
   public with: { subQuery: SQLQuery }[] = [];
 
@@ -80,15 +80,6 @@ class SQLQuery {
     this.limit = 0;
 
     this.currentPart = SQLQueryParts.FROM;
-  }
-
-  private joinLogicStatements(logicStatements: string[][]): string {
-    let ands: string[] = [];
-    for (let i = 0; i < logicStatements.length; i++) {
-      const ors = logicStatements[i];
-      ands.push(`(${ors.join(" OR ")})`);
-    }
-    return ands.join(" AND ");
   }
 
   private checkTableName(tableName: string, verifiedTableNames: Set<string>) {
@@ -121,6 +112,7 @@ class SQLQuery {
     this.resolveWhere(query, params);
     this.resolveAggregate(query, params);
     this.resolveOrderBy(query, params);
+    this.resolveLimit(query, params);
 
     return { text: query.join(" "), params: params };
   }
@@ -202,9 +194,10 @@ class SQLQuery {
     } else {
       query.push("SELECT ");
       for (let i = 0; i < this.columns.length; i++) {
-        const columnName = this.columns[i];
+        const { name, as } = this.columns[i];
+        // check regex for as, column existence is checked in node
         if (i > 0) query.push(", ");
-        query.push(`${columnName}`);
+        query.push(`${name} AS ${as}`);
       }
     }
   }
@@ -237,6 +230,13 @@ class SQLQuery {
     query.push(" GROUP BY ");
 
     query.push(`${this.groupBy.groupColumn}`);
+  }
+
+  private resolveLimit(query: string[], params: string[]) {
+    if (this.limit === undefined) return;
+    query.push(" LIMIT ");
+    query.push(`$${params.length + 1}`);
+    params.push(this.limit.toString());
   }
 
   public canContain(part: SQLQueryParts): boolean {

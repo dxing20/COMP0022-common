@@ -53,14 +53,6 @@ class SQLQuery {
         this.limit = 0;
         this.currentPart = SQLQueryParts.FROM;
     }
-    joinLogicStatements(logicStatements) {
-        let ands = [];
-        for (let i = 0; i < logicStatements.length; i++) {
-            const ors = logicStatements[i];
-            ands.push(`(${ors.join(" OR ")})`);
-        }
-        return ands.join(" AND ");
-    }
     checkTableName(tableName, verifiedTableNames) {
         if (tableName.includes(" ")) {
             throw new Error("Table name cannot contain spaces");
@@ -85,6 +77,7 @@ class SQLQuery {
         this.resolveWhere(query, params);
         this.resolveAggregate(query, params);
         this.resolveOrderBy(query, params);
+        this.resolveLimit(query, params);
         return { text: query.join(" "), params: params };
     }
     resolveFrom(query, params, verifiedTableNames) {
@@ -157,10 +150,11 @@ class SQLQuery {
         else {
             query.push("SELECT ");
             for (let i = 0; i < this.columns.length; i++) {
-                const columnName = this.columns[i];
+                const { name, as } = this.columns[i];
+                // check regex for as, column existence is checked in node
                 if (i > 0)
                     query.push(", ");
-                query.push(`${columnName}`);
+                query.push(`${name} AS ${as}`);
             }
         }
     }
@@ -194,6 +188,13 @@ class SQLQuery {
             return;
         query.push(" GROUP BY ");
         query.push(`${this.groupBy.groupColumn}`);
+    }
+    resolveLimit(query, params) {
+        if (this.limit === undefined)
+            return;
+        query.push(" LIMIT ");
+        query.push(`$${params.length + 1}`);
+        params.push(this.limit.toString());
     }
     canContain(part) {
         if (part < this.currentPart)

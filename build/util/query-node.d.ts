@@ -32,6 +32,11 @@ export declare class Graph {
         order: Order;
     }[]): void;
     addAggregateNode(child: number, aggregate: Aggregate, groupColumn: string, aggregateColumn: string): void;
+    addLimitNode(child: number, limit: number): void;
+    addSelectNode(child: number, selection: {
+        name: string;
+        as: string;
+    }[]): void;
     getGraph(): {
         nodes: any[];
         edges: any[];
@@ -171,6 +176,46 @@ export declare class AggregateNode implements GraphNode {
     groupColumn: string;
     aggregateColumn: string;
     constructor(id: number, child: number, aggregate: Aggregate, groupColumn: string, aggregateColumn: string);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
+        sqlQuery: SQLQuery | undefined;
+    }>;
+    generateNode(freq: number[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
+}
+export declare class LimitNode implements GraphNode {
+    id: number;
+    type: NodeType;
+    status: ClientStatus;
+    error: string | undefined;
+    depth: number;
+    child: number;
+    hasParent: boolean;
+    columns: string[];
+    limit: number;
+    constructor(id: number, child: number, limit: number);
+    resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
+        sqlQuery: SQLQuery | undefined;
+    }>;
+    generateNode(freq: number[]): any;
+    generateEdge(otherNodes: GraphNode[]): any[];
+}
+export declare class SelectNode implements GraphNode {
+    id: number;
+    type: NodeType;
+    status: ClientStatus;
+    error: string | undefined;
+    depth: number;
+    child: number;
+    hasParent: boolean;
+    columns: string[];
+    selection: {
+        name: string;
+        as: string;
+    }[];
+    constructor(id: number, child: number, selection: {
+        name: string;
+        as: string;
+    }[]);
     resolve(tableNames: string[], queryHandler: RuntimeQueryHandler, otherNodes: GraphNode[]): Promise<{
         sqlQuery: SQLQuery | undefined;
     }>;
